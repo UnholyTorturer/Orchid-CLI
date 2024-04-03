@@ -8,7 +8,7 @@ Orchid is not a clever name, I just like the way it sounds
 """
 
 # import the required libraries
-import os, time, machine, gc
+import os, time, machine, gc, network
 from random import randint
 from machine import Pin, SPI, SDCard 
 from lib import keyboard
@@ -75,7 +75,7 @@ with open("/sys/files/config.txt", "r") as f:
     pr_color = lines[3]  #<-- prompt color
     automount = lines[4] #<-- automount the SD card?
     bt_enable = lines[5] #<-- enable Bluetooth, not yet implemented
-    ssid = lines[6]      #<-- saved ssid     if ssid and pwrd are not none, 
+    ssid = lines[6]      #<-- saved ssid     if ssud and pwrd are not none, 
     pwrd = lines[7]      #<-- saved pasword  we will autoconnect to wifi
 
 # init the display driver
@@ -155,12 +155,17 @@ def parser(value):
 def usr_msg(msg, pos, color):
     tft.fill(bg_color)
     tft.text(vga_small, msg, default_x, pos, color, bg_color)
+    text_get()
 
-def multi_msg(msgs, pos, color):
-    # this will take a list of lines from msgs, starting with small row 5
-    # as a top down printing, instead of from the bottom, because this function
-    # is intended to show pages, not single lines.
-    pass
+def multi_msg(msgs, color):
+    tft.fill(bg_color)
+    tft.text(vga_small, msgs[0], default_x, small_row5, color, bg_color)
+    tft.text(vga_small, msgs[1], default_x, small_row4, color, bg_color)
+    tft.text(vga_small, msgs[2], default_x, small_row3, color, bg_color)
+    tft.text(vga_small, msgs[3], default_x, small_row2, color, bg_color)
+    tft.text(vga_small, msgs[4], default_x, small_row1, color, bg_color)
+    tft.text(vga_small, msgs[5], default_x, small_row0, color, bg_color)
+    text_get()
 
 def charge_screen():
     # make the screen black and turn off the backlight for charging
@@ -173,6 +178,7 @@ def charge_screen():
         p38.value(1)
         tft.fill(black)
         tft.text(vga_small, prompt+"", default_x, small_row0, fg_color, bg_color)
+        text_get()
 
 # command functions
 # zero parameter functions
@@ -207,11 +213,12 @@ def o_flip():
 
 def o_history():
     # display the command history on the screen
-    # this needs a six line buffer to store the command history.
+    # I should do this with a list and send it to multi_msg()
     pass
 
 def o_lock():
     # make the screen black and wait for keyboard input to ask for a password
+    # not sure how much I need this with the G0 button
     pass
 
 def o_mount():
@@ -223,8 +230,21 @@ def o_mount():
     text_get()
 
 def o_scan():
-    # using the template in snips, scan for wifi networks. 
-    pass
+    # this isn't going to work very well, as it will need more room
+    # than the screen can give us. Perhaps I should kill this and
+    # just use the scandump function instead.
+    sta_if = network.WLAN(network.STA_IF)
+    sta_if.active(True)
+    authmodes = ['Open', 'WEP', 'WPA-PSK' 'WPA2-PSK4', 'WPA/WPA2-PSK']
+    for (ssid, bssid, channel, RSSI, authmode, hidden) in sta_if.scan():
+        line0 = "* {:s}".format(ssid)
+        line1 = "   - Auth: {} {}".format(authmodes[authmode], '(hidden)' if hidden else '')
+        line2 = "   - Channel: {}".format(channel)
+        line3 = "   - RSSI: {}".format(RSSI)
+        line4 = "   - BSSID: {:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}".format(*bssid)
+        line5 = ""
+    msgs = [line0, line1, line2, line3, line4, line5]
+    multi_msg(msgs, yellow)
 
 def o_scandump():
     # just like scan, but also dumps the data to a file on the SD card
@@ -252,12 +272,15 @@ def o_umount():
     if "sd" in os.listdir("/"):
         os.umount("/sd")
         usr_msg("SD Unmounted!", small_row0, blue)
+    else:
+        usr_msg("SD was not mounted!", small_row0, red)
     text_get()
 
 # single parameter functions
 def o_bg_color(color):
     # accepts either a named color, or a hex color for the background color
     lines[0] = color
+    usr_msg("bg_color changed")
     text_get()
 
 def o_bright(amount):
@@ -282,9 +305,6 @@ def o_env_get(env_var):
 
 def o_exe(path_to_file):
     # used to run an external python file
-    # I know that exec() is considered unsafe, 
-    # but a single Cardputer isn't going to be 
-    # used by multiple users.
     gc.collect()
     exec(open(path_to_file).read())
     text_get()
