@@ -305,6 +305,9 @@ def o_env_get(env_var):
 
 def o_exe(path_to_file):
     # used to run an external python file
+    # I know that exec() is considered unsafe, 
+    # but a single Cardputer isn't going to be 
+    # used by multiple users.
     gc.collect()
     exec(open(path_to_file).read())
     text_get()
