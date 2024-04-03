@@ -75,7 +75,7 @@ with open("/sys/files/config.txt", "r") as f:
     pr_color = lines[3]  #<-- prompt color
     automount = lines[4] #<-- automount the SD card?
     bt_enable = lines[5] #<-- enable Bluetooth, not yet implemented
-    ssid = lines[6]      #<-- saved ssid     if ssud and pwrd are not none, 
+    ssid = lines[6]      #<-- saved ssid     if ssid and pwrd are not none, 
     pwrd = lines[7]      #<-- saved pasword  we will autoconnect to wifi
 
 # init the display driver
@@ -282,6 +282,9 @@ def o_env_get(env_var):
 
 def o_exe(path_to_file):
     # used to run an external python file
+    # I know that exec() is considered unsafe, 
+    # but a single Cardputer isn't going to be 
+    # used by multiple users.
     gc.collect()
     exec(open(path_to_file).read())
     text_get()
