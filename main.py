@@ -10,7 +10,7 @@ Orchid is not a clever name, I just like the way it sounds
 # import the required libraries
 import os, time, machine, gc, network
 from random import randint
-from machine import Pin, SPI, SDCard 
+from machine import Pin, SPI, SDCard, ADC
 from lib import keyboard
 from lib import st7789py as st7789
 from fonts import vga1_8x16 as vga_small
@@ -117,7 +117,7 @@ gc.collect()
 # arguments, but that's a problem for future me.
 def parser(value):
 
-    zero_list = ['batt','clean','clear','clock','exit','flip','history','lock',
+    zero_list = ['batt','clean','clear','clock','flip','history','lock',
              'mount','scan','scandump','space','system','umount']
 
     one_list = ['bg_color','bright','captive','chdir','env_get','exe','fg_color',
@@ -130,26 +130,26 @@ def parser(value):
     command = value_list[0].lower()      #<-- make sure that command is lower case
     if len(value_list) == 1:             #<-- branch by length
         if command not in zero_list:
-            print("Command not found!")  #<-- all print() commands will need to be converted to user_message() commands
-        if command in zero_list:
+            usr_msg("Command not found!")  
+        if command in zero_list:         
             eval("o_"+command+"()")
     if len(value_list) == 2:
         param1 = value_list[1]
         if command not in one_list:
-            print("Command not found!")
+            usr_msg("Command not found!")
         if command in one_list:
             eval("o_"+command)(param1)
     if len(value_list) == 3:
         param1 = value_list[1]
         param2 = value_list[2]
         if command not in two_list:
-            print("Command not found!")
+            usr_msg("Command not found!")
         if command in two_list:
             eval("o_"+command)(param1, param2)
     if len(value_list) > 3:
-        print("Too many parameters!")
+        usr_msg("Too many parameters!")
     if len(value_list) == 0:
-        print("No command given!")
+        usr_msg("No command given!")
 
 # program functions
 def usr_msg(msg, pos, color):
@@ -158,6 +158,8 @@ def usr_msg(msg, pos, color):
     text_get()
 
 def multi_msg(msgs, color):
+    # when calling multi_msg, something needs to be
+    # passed for each line to avoid an error
     tft.fill(bg_color)
     tft.text(vga_small, msgs[0], default_x, small_row5, color, bg_color)
     tft.text(vga_small, msgs[1], default_x, small_row4, color, bg_color)
@@ -169,7 +171,7 @@ def multi_msg(msgs, color):
 
 def charge_screen():
     # make the screen black and turn off the backlight for charging
-    # or recreate the splash screen
+    # or go back to the prompt
     p38 = Pin(38, Pin.OUT)
     if p38.value() == 1:
         tft.fill(bg_color)
@@ -183,28 +185,32 @@ def charge_screen():
 # command functions
 # zero parameter functions
 def o_batt():
-    # display battery information
-    pass
+    # display battery information - needs work
+    adc = ADC(10)
+    lvl = adc.read_uv()
+    print(lvl)
+    text_get()
 
 def o_clean():
     # clear the screen and run garbage collection
+    tft.fill(bg_color)
+    tft.text(vga_small, prompt+"", default_x, small_row0, fg_color, bg_color)
     gc.collect()
     text_get()
 
 def o_clear():
     # clear the screen
     tft.fill(bg_color)
+    tft.text(vga_small, prompt+"", default_x, small_row0, fg_color, bg_color)
     text_get()
 
 def o_clock():
     # show the date and time
-    pass
-
-def o_exit():
-    # exit the main program and sleep
+    # so far, I've not come up with a clock that I like
     pass
 
 def o_flip(): 
+    # flip a coin, get heads or tails
     if randint(0,1) == 1:
         usr_msg("Heads", small_row0, fg_color)
     else:
@@ -280,7 +286,7 @@ def o_umount():
 def o_bg_color(color):
     # accepts either a named color, or a hex color for the background color
     lines[0] = color
-    usr_msg("bg_color changed")
+    usr_msg(f"bg_color={bg_color}", small_row0, color)
     text_get()
 
 def o_bright(amount):
@@ -315,6 +321,7 @@ def o_exe(path_to_file):
 def o_fg_color(color):
     # accepts either a named color or a hex value to set the foreground color
     lines[1] = color
+    usr_msg(f"fg_color={fg_color}", small_row0, color)
     text_get()
 
 def o_help(command):
@@ -327,6 +334,7 @@ def o_help(command):
 def o_hi_color(color):
     # accepts either a named color or a hex value to set the highlight color
     lines[2] = color
+    usr_msg(f"hi_color={hi_color}", small_row0, color)
     text_get()
 
 def o_list(path_to_dir):
@@ -346,13 +354,13 @@ def o_mkfile(path_to_file):
         
 
 def o_net(action):
-    # expects either connect (con), disconnect (dis), or status (sta)
+    # expects either connect (con), disconnect (dis), or status (stat)
     #to connect, disconnect or show the status of the network connection
     if action == "connect" or "con":
         pass
     if action == "disconnect" or "dis":
         pass
-    if action == "status" or "sta":
+    if action == "status" or "stat":
         pass
     text_get()
 
@@ -363,6 +371,9 @@ def o_rmdir(path_to_dir):
     text_get()
 
 def o_roll(dice):
+    # roll ndf, where n is the number of dice
+    # d means die
+    # f is the number of faces the die has
     roll_list = dice.split('d')
     die = int(roll_list[1])
     die_name = "d" + roll_list[1]
@@ -379,9 +390,10 @@ def o_sound(wavfile):
     pass
 
 def speed(speed):
-    if speed == "fast":
+    #expects fast (or 240) or slow (or 160)
+    if speed == "fast" or "240":
         machine.freq(240000000)
-    else:
+    if speed == "slow" or "160":
         machine.freq(160000000)
     text_get()
 
@@ -409,7 +421,8 @@ def o_ping(ip, times):
 
 def o_redir(old_name, new_name):
     # rename the file or directory specified
-    pass
+    os.rename(old_name, new_name)
+    text_get()
 
 def text_get():
     # yeah, I know we aren't really supposed to use global variables
@@ -434,7 +447,7 @@ def text_get():
                 value = current_value
                 current_value = ""
                 if value == "":
-                    user_message("Give nothing, get nothing", yellow)
+                    usr_msg("Give nothing, get nothing", yellow)
                 else:
                     parser(value)
                 
