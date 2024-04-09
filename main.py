@@ -77,6 +77,7 @@ with open("/sys/files/config.txt", "r") as f:
     bt_enable = lines[5] #<-- enable Bluetooth, not yet implemented
     ssid = lines[6]      #<-- saved ssid     if ssud and pwrd are not none, 
     pwrd = lines[7]      #<-- saved pasword  we will autoconnect to wifi
+    ver = lines[8]       #<-- version number
 
 # init the display driver
 spi = SPI(1, baudrate=40000000, sck=Pin(36), mosi=Pin(35), miso=None)
@@ -188,7 +189,7 @@ def o_batt():
     # display battery information - needs work
     adc = ADC(10)
     lvl = adc.read_uv()
-    print(lvl)
+    tft.text(vga_small, lvl, default_x, small_row0, fg_color, bg_color)
     text_get()
 
 def o_clean():
@@ -271,7 +272,8 @@ def o_space():
 
 def o_system():
     # display useful information about the hardware and software system
-    pass
+    version = f"Orchid CLI version {ver}"
+    usr_msg(version, small_row0, hi_color)
 
 def o_umount():
     # check to see if the SD card is mounted. If not, let the user know, otherwise unmount it.
@@ -307,6 +309,8 @@ def o_chdir(path_to_dir):
 
 def o_env_get(env_var):
     # prints the value of the environment variable provided
+    env = ['bg_color','fg_color','hi_color','pr_color','automount','bt_enable',
+           'ssid','pwrd','ver']
     pass
 
 def o_exe(path_to_file):
@@ -404,7 +408,8 @@ def o_vol(amount):
 
 #double parameter functions
 def o_alias(old_alias, new_alias):
-    # change the command word for something into something else, will use an alias.txt file
+    # change the command word for something into something else
+    # will use an alias.txt file
     pass
 
 def o_copy(origin, destination):

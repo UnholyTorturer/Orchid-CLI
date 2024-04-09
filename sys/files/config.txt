@@ -6,3 +6,4 @@ True
 False
 none
 none
+0.0.6
