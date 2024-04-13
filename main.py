@@ -13,6 +13,7 @@ from random import randint
 from machine import Pin, SPI, SDCard, ADC
 from lib import keyboard
 from lib import st7789py as st7789
+from lib import uping
 from fonts import vga1_8x16 as vga_small
 from fonts import vga1_16x32 as vga_large
 from fonts import vga1_bold_16x32 as vga_bold
@@ -118,7 +119,7 @@ gc.collect()
 # arguments, but that's a problem for future me.
 def parser(value):
 
-    zero_list = ['batt','clean','clear','clock','flip','history','lock',
+    zero_list = ['batt','clean','clear','clock','flip','history',
              'mount','scan','scandump','space','system','umount']
 
     one_list = ['bg_color','bright','captive','chdir','env_get','exe','fg_color',
@@ -207,8 +208,18 @@ def o_clear():
 
 def o_clock():
     # show the date and time
-    # so far, I've not come up with a clock that I like
-    pass
+    current_time = time.localtime()
+    year = current_time[0]
+    month = current_time[1]
+    mday = current_time[2]
+    hour = current_time[3]
+    minute = current_time[4]
+    second = current_time[5]
+    date = f"{year}-{month}-{mday}"
+    clock = f"{hour}:{minute}:{second}"
+    tft.text(vga_small, date, default_x, small_row1, orange, bg_color)
+    tft.text(vga_small, clock, default_x, small_row0, red, bg_color)
+    text_get()
 
 def o_flip(): 
     # flip a coin, get heads or tails
@@ -221,11 +232,6 @@ def o_flip():
 def o_history():
     # display the command history on the screen
     # I should do this with a list and send it to multi_msg()
-    pass
-
-def o_lock():
-    # make the screen black and wait for keyboard input to ask for a password
-    # not sure how much I need this with the G0 button
     pass
 
 def o_mount():
@@ -354,8 +360,7 @@ def o_mkdir(path_to_dir):
 def o_mkfile(path_to_file):
     f = open(path_to_file, "w")
     f.close()
-    text_get()
-        
+    text_get() 
 
 def o_net(action):
     # expects either connect (con), disconnect (dis), or status (stat)
@@ -422,7 +427,14 @@ def o_env_set(env_var, param):
 
 def o_ping(ip, times):
     # ping the given IP or URL the given number of times
-    pass
+    # this needs a bit of polish
+    result = uping.ping(ip, count=times, quiet=True)
+    if result[1] != 0:
+        msg_string = f"Returned {result[1]} of {result[0]} packets sent."
+        usr_msg(msg_string, small_row0, cyan)
+    else:
+        msg_string = "Failure!"
+        usr_msg(msg_string, small_row0, red)
 
 def o_redir(old_name, new_name):
     # rename the file or directory specified
