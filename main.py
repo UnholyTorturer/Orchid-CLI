@@ -315,9 +315,27 @@ def o_chdir(path_to_dir):
 
 def o_env_get(env_var):
     # prints the value of the environment variable provided
-    env = ['bg_color','fg_color','hi_color','pr_color','automount','bt_enable',
-           'ssid','pwrd','ver']
-    pass
+    if env_var == "bg_color":
+        usr_msg(f"bg_color = {bg_color}",small_row0, orchid)
+    if env_var == "fg_color":
+        usr_msg(f"fg_color = {fg_color}",small_row0, orchid)
+    if env_var == "hi_color":
+        usr_msg(f"hi_color = {hi_color}",small_row0, orchid)
+    if env_var == "pr_color":
+        usr_msg(f"pr_color = {pr_color}",small_row0,orchid)
+    if env_var == "automount":
+        usr_msg(f"automount is {automount}",small_row0,orchid)
+    if env_var == "bt_enable":
+        usr_msg(f"bt_enable is {bt_enable}",small_row0,orchid)
+    if env_var == "ssid":
+        usr_msg(f"ssid - {ssid}",small_row0,orchid)
+    if env_var == "pwrd":
+        usr_msg(f"pwrd is {pwrd}",small_row0,orchid)
+    if env_var == "ver":
+        usr_msg(f"Software ver {ver}",small_row0,orchid)
+    else:
+        usr_msg(f"{env_var} is unrecognized")
+    text_get()
 
 def o_exe(path_to_file):
     # used to run an external python file
@@ -423,7 +441,15 @@ def o_copy(origin, destination):
 
 def o_env_set(env_var, param):
     # set the environment variable provided to the parameter given.
-    pass
+    if env_var == "bg_color": lines[0] = param
+    if env_var == "fg_color": lines[1] = param
+    if env_var == "hi_color": lines[2] = param
+    if env_var == "pr_color": lines[3] = param
+    if env_var == "automount": lines[4] = param
+    if env_var == "ssid": lines[5] = param
+    if env_var == "pwrd": lines[6] = param
+    else: usr_msg("Unknown command!",small_row0,red)
+    text_get()
 
 def o_ping(ip, times):
     # ping the given IP or URL the given number of times
