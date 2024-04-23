@@ -14,6 +14,7 @@ from machine import Pin, SPI, SDCard, ADC
 from lib import keyboard
 from lib import st7789py as st7789
 from lib import uping
+from lib import textwrap
 from fonts import vga1_8x16 as vga_small
 from fonts import vga1_16x32 as vga_large
 from fonts import vga1_bold_16x32 as vga_bold
@@ -196,6 +197,20 @@ def charge_screen():
         tft.text(vga_small, prompt+"", default_x, small_row0, fg_color, bg_color)
         text_get()
 
+def wrapper(txt):
+    wrapped_list = textwrap.wrap(txt, width=small_length)
+    """
+    textwrap provides a list of lines wrapped to a character count
+    which in our case will be the small_length variable of 26. We
+    need to make sure that there are no more than six lines of
+    wrappred text, as that is the maximum our display can use with 
+    our font. There needs to be a scroll up method for additional 
+    lines, as well as a method of escaping the block text back to 
+    the command prompt. I may borrow the ctrl+c key combo for Linux
+    for this. 
+    """
+    pass
+
 # command functions
 # zero parameter functions
 def o_batt():
@@ -276,22 +291,16 @@ def o_scandump():
     pass
 
 def o_space():
-    # get information about the SD card's total and available space
-    """
-    import os
-    os.statvfs('/')
-    (4096, 4096, 348, 329, 329, 0, 0, 0, 0, 255)
-
-    so,
-    4096 * 348 is total space in bytes
-    4096 * 329 is free space in bytes
-    used space = total - free"""
+    # This might end up removed, as I've not found a reliable way
+    # to get the free or used space of an SD card in MP
     pass
 
 def o_system():
     # display useful information about the hardware and software system
     version = f"Orchid CLI version {ver}"
-    usr_msg(version, small_row0, hi_color)
+    usr_msg(version, small_row1, hi_color)
+    usr_msg(machine.unique_id(), small_row0, hi_color)
+    text_get()
 
 def o_umount():
     # check to see if the SD card is mounted. If not, let the user know, otherwise unmount it.
@@ -360,7 +369,8 @@ def o_exe(path_to_file):
     text_get()
 
 def o_fg_color(color):
-    # accepts either a named color or a hex value to set the foreground color
+    # accepts either a named color or a hex value to set the 
+    #foreground color
     lines[1] = color
     usr_msg(f"fg_color={fg_color}", small_row0, color)
     text_get()
@@ -454,7 +464,12 @@ def o_alias(old_alias, new_alias):
 
 def o_copy(origin, destination):
     # copy the origin file to the destination location
-    pass
+    with open(origin, "r") as f:
+        contents = f.read()
+    with open(destination, "w") as f:
+        f.write(contents)
+    usr_msg(f"{origin} was copied to {destination}")
+    text_get()
 
 def o_env_set(env_var, param):
     # set the environment variable provided to the parameter given.

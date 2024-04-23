@@ -25,3 +25,9 @@ keyboard.py
 echo-lalia
 GNU GPL
 https://github.com/echo-lalia/Cardputer-MicroHydra
+
+textwrap.py
+Copyright (C) 1999-2001 Gregory P. Ward.
+Copyright (C) 2002, 2003 Python Software Foundation.
+Written by Greg Ward <gward@python.net>
+License unknown
