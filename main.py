@@ -113,11 +113,23 @@ gc.collect()
 
 # define our functions
 
+def prompt_set(current_dir):
+    prompt = current_dir+prompt_char
+    tft.fill(bg_color)
+    tft.text(vga_small, prompt, default_x, small_row0, fg_color, bg_color) 
+    text_get()
+
 # the command parser
 # at some point the parser should be able to tell you that
 # a proper command was given, but not the correct number of
 # arguments, but that's a problem for future me.
 def parser(value):
+
+    """
+    Need to ammend the command lists if there are changes present
+    in the alias.txt file. Not entirely sure of the method for this,
+    but I'm sure I have something in my snip collection.
+    """
 
     zero_list = ['batt','clean','clear','clock','flip','history',
              'mount','scan','scandump','space','system','umount']
@@ -311,6 +323,7 @@ def o_captive(cap_ssid):
 def o_chdir(path_to_dir):
     # change the current working directory to the specified directory
     os.chdir(path_to_dir)
+    prompt_set(path_to_dir)
     text_get()
 
 def o_env_get(env_var):
@@ -373,11 +386,13 @@ def o_list(path_to_dir):
 def o_mkdir(path_to_dir):
     # make a directory at the given location
     os.mkdir(path_to_dir)
+    usr_msg(f"mkdir @ {path_to_dir}", small_row0, blue, bg_color)
     text_get()
 
 def o_mkfile(path_to_file):
     f = open(path_to_file, "w")
     f.close()
+    usr_msg(f"mkfile @ {path_to_file}", small_row0, blue, bg_color)
     text_get() 
 
 def o_net(action):
@@ -395,6 +410,7 @@ def o_rmdir(path_to_dir):
     # remove the specified file or directory
     # should warn and ask for confirmation before removal
     os.rmdir(path_to_dir)
+    usr_msg(f"{path_to_dir} removed!", small_row0, red, bg_color)
     text_get()
 
 def o_roll(dice):
@@ -410,6 +426,7 @@ def o_roll(dice):
     else:
         rolls = [randint(1, die) for _ in range(int(roll_list[0]))]
     usr_msg(rolls, small_row0, green)
+    text_get()
 
 def o_sound(wavfile):
     # this will likely not be implemented until the next stable
@@ -432,7 +449,7 @@ def o_vol(amount):
 #double parameter functions
 def o_alias(old_alias, new_alias):
     # change the command word for something into something else
-    # will use an alias.txt file
+    # will use an alias.txt file. 
     pass
 
 def o_copy(origin, destination):
@@ -465,6 +482,7 @@ def o_ping(ip, times):
 def o_redir(old_name, new_name):
     # rename the file or directory specified
     os.rename(old_name, new_name)
+    usr_msg(f"{old_name} renamed {new_name}", small_row0, purple)
     text_get()
 
 def text_get():
